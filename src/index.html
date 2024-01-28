@@ -1,0 +1,91 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ru" lang="ru">
+<head>
+<title>Wallet mukava</title>
+<meta charset=utf-8 />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
+
+<script type='text/javascript' language='JavaScript' src='/bundle-polkadot-util.js'></script>
+<script type='text/javascript' language='JavaScript' src='/bundle-polkadot-util-crypto.js'></script>
+<script type='text/javascript' language='JavaScript' src='/bundle-polkadot-keyring.js'></script>
+<script type='text/javascript' language='JavaScript' src='/identicons.js'></script>
+
+<script>
+
+function getWinH(){ return window.innerHeight || (document.compatMode=='CSS1Compat' && !window.opera ? document.documentElement.clientHeight : document.body.clientHeight); }
+function getDocH(){ return document.compatMode!='CSS1Compat' ? document.body.scrollHeight : document.documentElement.scrollHeight; }
+
+function cpbuf(s) {
+    var area = document.createElement('textarea');
+    document.body.appendChild(area);
+    area.value = s;
+    area.select();
+    document.execCommand('copy');
+    document.body.removeChild(area);
+}
+
+function run() {
+    var bk = document.body;
+
+    var git='https://github.com/lleokaganov/identikon-beauty-shop';
+    bk.innerHTML="<div style='font-size:10px;color:#ccc;matgin:2px 0 10px 10px;'><a href='"+git+"' targer='_blank'>About</a>";
+    polkadotKeyring.setSS58Format(42);
+
+    if ( document.location.search != '') {
+	var mne=document.location.search.replace(/\+/g,' ').replace(/\?/g,'');
+	var size=256;
+	const seed = polkadotUtilCrypto.mnemonicToMiniSecret(mne);
+	const { publicKey, secretKey } = polkadotUtilCrypto.ed25519PairFromSeed(seed);
+	var addr = polkadotKeyring.encodeAddress(publicKey);
+	bk.innerHTML=bk.innerHTML+"<center>"
+	    +"<div style='font-size:12px; margin:50px 0 30px 0'><b>"+addr+"</b></div>"
+	    +"<div style='font-size:10px'>"+mne+"</font>"
+	    +"<div id='iden' style='margin-top:100px;'>"
+		+"<div style='width:"+size+"px; height:"+size+"px;margin=2px;display=inline-block;' identicon='"+addr+"'></div>"
+	    +"</div>"
+	    +"</center>";
+        identicon_init(document.querySelector('#iden'), size);
+	return;
+    }
+
+    var size=64;
+    var k=1;
+
+    var cpcopy=function(e){ e = window.event.target;
+	while( e && e.id == '' ) e=e.parentNode;
+	var mne = e.getAttribute('mnemonic');
+	var s = e.getAttribute('identicon')+"\n\n"+mne;
+	cpbuf(s);
+	if( confirm('Copypasted:\n\n'+s+'\n\nOpen in new window?') ) {
+	    window.open(document.location.href.replace(/\?.+$/g,'')+'?'+mne.replace(/ /g,'+'), '_blank');
+	}
+    };
+
+    var gen=function() {
+	const mne = polkadotUtilCrypto.mnemonicGenerate();
+	const seed = polkadotUtilCrypto.mnemonicToMiniSecret(mne);
+	const { publicKey, secretKey } = polkadotUtilCrypto.ed25519PairFromSeed(seed);
+	var addr = polkadotKeyring.encodeAddress(publicKey);
+
+	var div = document.createElement("div");
+	div.id = "id"+(++k);
+	div.style.width = size+"px";
+	div.style.height = size+"px";
+	div.style.margin = "2px";
+	div.style.display = "inline-block";
+	div.onclick = cpcopy;
+	div.setAttribute('mnemonic',mne);
+	div.setAttribute('identicon',addr);
+	bk.appendChild(div);
+
+        identicon_init(document.querySelector('#id'+k), size);
+
+	if( getWinH() != getDocH() ) div.remove();
+	else setTimeout(gen,1);
+    }
+    gen();
+}
+</script>
+
+</head><body onload='run()'>Loading...</body></html>
